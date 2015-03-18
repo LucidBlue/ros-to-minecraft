@@ -27,7 +27,7 @@ Instructions
 
 3. Install the Minecraft server, but remember to: a) add yourself as an admin and b) set the server to "offline mode" in the config file. This last bit is necessary to allow the bot to log in without authentication.
 
-4. Modify the files: event.py and inventory.py (in the SpockBot source) by just copy-pasting from this repo.
+4. Modify the files: event.py and inventory.py (in the SpockBot source) by just copy-pasting from this repo. event.py contains new code to create a ROS node, subscriber, and callback function that triggers an event. I've had trouble getting ROS to work with Python 3, so I had to 'retrofit' inventory.py a little to make it work with 2.7
 
 5. Build the SpockBot source
 
