@@ -33,6 +33,6 @@ Instructions
 
 6. Run the two ROS nodes: spock_listener and spock_msg_generator
 
-7. Hope that everything works!
+7. If everything worked, the bot should be... waving its arm every 5 seconds
 
 
