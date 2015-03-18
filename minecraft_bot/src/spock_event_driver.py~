@@ -1,0 +1,46 @@
+#! /usr/bin/env python
+
+import roslib; roslib.load_manifest('minecraft_bot')
+import rospy
+from minecraft_bot.msg import controller_msg
+
+import sys
+
+from spock import Client, PluginLoader
+from spock.plugins import DefaultPlugins
+from spockbot.plugins.ChatCommand import ChatCommandPlugin
+#from spock.plugins.core.settings import PloaderFetch
+
+
+def main():
+    # Initialize ROS node
+    rospy.init_node('spock_listener')
+
+    # class used to send basic spock commands to minecraft
+    #commander = BaseCommandsPlugin(ploader, settings)
+    
+    # subscribe to random action generator stream
+    rospy.Subscriber('controller_data', controller_msg, cmd_callback, queue_size=1)
+    
+    # wait for new commands
+    rospy.spin()
+
+
+# send basic commands to spock
+def cmd_callback(data):
+
+    command = int(data.action)
+    
+    command_out = ""
+    print("received value: " + str(command))
+    if command == 1:
+        command_out = "cmd_jump"
+        print("sent command to spock: " + command_out)
+        ChatCommandPlugin.emit(command_out)
+
+
+
+
+if __name__ == '__main__':
+    main()
+
