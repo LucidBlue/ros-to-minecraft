@@ -1,13 +1,13 @@
-==================
-# ros-to-minecraft
 
+# ros-to-minecraft
+==================
 
 simple demo linking ROS to Spock (an open-source python implementation of the Minecraft protocol)
 
 
--------------
-Dependencies:
 
+Dependencies:
+-------------
 
 > ROS | http://www.ros.org/
 
@@ -17,9 +17,9 @@ Dependencies:
 
 > also the SpockBot examples may be helpful: | https://github.com/SpockBotMC/SpockBot-Contrib
 
-------------
-Instructions
 
+Instructions
+------------
 
 1. Install ROS
 
