@@ -13,7 +13,7 @@ Dependencies:
 
 > minecraft server | https://minecraft.net/download
 
-> SpockBotMC | https://github.com/SpockBotMC/SpockBot
+> SpockBot | https://github.com/SpockBotMC/SpockBot
 
 > also the SpockBot examples may be helpful: | https://github.com/SpockBotMC/SpockBot-Contrib
 
