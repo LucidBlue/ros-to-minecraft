@@ -22,7 +22,7 @@ from random import randint
 
 actionvals = {}
 
-class SimpleAdderAgent(opencog.cogserver.MindAgent):
+class SimpleAgent(opencog.cogserver.MindAgent):
 
     def __init__(self):
         self.a = AtomSpace()
@@ -52,10 +52,10 @@ def mainloop():
     # Create publisher to send out ControllerMsg messages
     spock_pub = rospy.Publisher('controller_data', controller_msg)
     
-    AdderAgent = SimpleAdderAgent()
+    Agent = SimpleAdderAgent()
     
     while not rospy.is_shutdown():
-        AdderAgent.performAction()
+        Agent.performAction()
         rospy.sleep(5.)
 
 def sendValue(atom):
