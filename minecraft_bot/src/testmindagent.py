@@ -13,11 +13,10 @@ from minecraft_bot.msg import controller_msg#, mc_msg
 from time import sleep
 
 import opencog.cogserver
-from opencog.atomspace import types, AtomSpace, Atom, TruthValue
+from opencog.atomspace import types, AtomSpace
 from opencog.scheme_wrapper import scheme_eval
 
 import sys
-import random
 from random import randint
 
 actionvals = {}
@@ -35,15 +34,14 @@ class SimpleAgent(opencog.cogserver.MindAgent):
 
     def performAction(self):
         #randomly select a link from those available and add the nodes
-        fnode = self.a.add_node(types.GroundedSchemaNode, "py:sendValue")
+        fnode = self.a.add_node(types.GroundedSchemaNode, "py: sendValue")
         current_link = self.a.add_link(types.ExecutionOutputLink, [
             fnode,
             self.a.add_link(types.ListLink, [self.nodes[randint(0,2)]])])
-        print(self.nodes[randint(0,2)].name)
-        #self.a.add_node(types.NumberNode, '5')
-        #exec_link = self.a.add_link(types.ExecutionLink, current_link.out)
-        #print(exec_link.out)
-        #return scheme_eval(self.a, "(cog-execute! exec_link)")
+        #print(self.nodes[randint(0,2)].name)
+        #sendValue(self.nodes[randint(0,2)])
+        #scheme_eval(self.a, '(+ 2 2)')
+        scheme_eval(self.a, '(cog-execute! (cog-atom %d))'%(current_link.handle_uuid()))
 
 def mainloop():
     global spock_pub
@@ -62,7 +60,7 @@ def mainloop():
 
 def sendValue(atom):
     message = controller_msg()
-    message.action = int(atom.name)
+    message.action = int(float(atom.name))
     spock_pub.publish(message)
     print("published action: %d" %(message.action))
 
