@@ -36,8 +36,10 @@ class SimpleAgent(opencog.cogserver.MindAgent):
     def performAction(self):
         #randomly select a link from those available and add the nodes
         fnode = self.a.add_node(types.GroundedSchemaNode, "py:sendValue")
-        current_link = self.a.add_link(types.ExecutionOutputLink, [fnode, self.nodes[randint(0,2)]])
-        print(current_link.out)
+        current_link = self.a.add_link(types.ExecutionOutputLink, [
+            fnode,
+            self.a.add_link(types.ListLink, [self.nodes[randint(0,2)]])])
+        print(self.nodes[randint(0,2)].name)
         #self.a.add_node(types.NumberNode, '5')
         #exec_link = self.a.add_link(types.ExecutionLink, current_link.out)
         #print(exec_link.out)
@@ -52,7 +54,7 @@ def mainloop():
     # Create publisher to send out ControllerMsg messages
     spock_pub = rospy.Publisher('controller_data', controller_msg)
     
-    Agent = SimpleAdderAgent()
+    Agent = SimpleAgent()
     
     while not rospy.is_shutdown():
         Agent.performAction()
@@ -60,7 +62,7 @@ def mainloop():
 
 def sendValue(atom):
     message = controller_msg()
-    message.action = atom.t
+    message.action = int(atom.name)
     spock_pub.publish(message)
     print("published action: %d" %(message.action))
 
