@@ -2,35 +2,43 @@
 
 """
     Created by Bradley Sheneman
-    ExecutionOutputLink provides list of arguments for called function
-    ExecutionLink connects inputs to outputs
-    GroundedSchemaNode function: py: module.function
-    but if not being loaded from separate file, just use function name
+    Uses new functionality allowing local functions to be used in GroundedSchemaNode
+    and evaluation without connecting to CogServer
+    Sets up a basic ROS node 
 """
+
 import roslib; roslib.load_manifest('minecraft_bot')
 import rospy
-from minecraft_bot.msg import controller_msg#, mc_msg
-from time import sleep
+from minecraft_bot.msg import controller_msg
 
-import opencog.cogserver
-from opencog.atomspace import types, AtomSpace
-from opencog.scheme_wrapper import scheme_eval
+from opencog.atomspace import AtomSpace, types
+from opencog.utilities import initialize_opencog, finalize_opencog
+import opencog.scheme_wrapper as scheme
+from opencog.scheme_wrapper import load_scm, scheme_eval
 
-import sys
+
 from random import randint
 
-actionvals = {}
 
-class SimpleAgent(opencog.cogserver.MindAgent):
+class SimpleAgent():
 
     def __init__(self):
         self.a = AtomSpace()
         self.nodes = {}
-
+        
+        # Initialize Scheme
+        scheme_preload = [  
+                    "opencog/atomspace/core_types.scm",
+                    "opencog/scm/utilities.scm"          ]
+        scheme.__init__(self.a)
+        for scheme_file in scheme_preload:
+            load_scm(self.a, scheme_file)
+        initialize_opencog(self.a)
+        
         #add 3 nodes with integer values
-        self.nodes[0] = self.a.add(types.NumberNode, "0")
-        self.nodes[1] = self.a.add(types.NumberNode, "1")
-        self.nodes[2] = self.a.add(types.NumberNode, "2")
+        self.nodes[0] = self.a.add(types.ConceptNode, "0")
+        self.nodes[1] = self.a.add(types.ConceptNode, "1")
+        self.nodes[2] = self.a.add(types.ConceptNode, "2")
 
     def performAction(self):
         #randomly select a link from those available and add the nodes
@@ -38,11 +46,14 @@ class SimpleAgent(opencog.cogserver.MindAgent):
         current_link = self.a.add_link(types.ExecutionOutputLink, [
             fnode,
             self.a.add_link(types.ListLink, [self.nodes[randint(0,2)]])])
-        #print(self.nodes[randint(0,2)].name)
-        #sendValue(self.nodes[randint(0,2)])
-        #scheme_eval(self.a, '(+ 2 2)')
+        
         scheme_eval(self.a, '(cog-execute! (cog-atom %d))'%(current_link.handle_uuid()))
-
+    
+    def remove(self):
+        # make sure this is called by the time script exits
+        finalize_opencog()
+        del self.a
+    
 def mainloop():
     global spock_pub
 
@@ -57,12 +68,16 @@ def mainloop():
     while not rospy.is_shutdown():
         Agent.performAction()
         rospy.sleep(5.)
+    
+    Agent.remove()
+
 
 def sendValue(atom):
     message = controller_msg()
-    message.action = int(float(atom.name))
+    message.action = int(atom.name)
     spock_pub.publish(message)
     print("published action: %d" %(message.action))
+    return atom
 
 
 
