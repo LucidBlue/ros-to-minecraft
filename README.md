@@ -2,7 +2,7 @@
 # ros-to-minecraft
 ==================
 
-simple demo linking ROS to Spock (an open-source python implementation of the Minecraft protocol)
+simple demo linking ROS to Spock (an open-source Python implementation of the Minecraft protocol)
 
 
 
