@@ -2,7 +2,7 @@
 # ros-to-minecraft
 ==================
 
-simple demo linking ROS to Spock (an open-source python implementation of the Minecraft protocol)
+simple demo linking ROS to Spock (an open-source Python implementation of the Minecraft protocol)
 
 
 
@@ -31,8 +31,8 @@ Instructions
 
 5. Build the SpockBot source
 
-6. Run the two ROS nodes: spock_listener and spock_msg_generator
+6. Run the two ROS nodes: cog_sender and spock_listener. cog_sender randomly sends a digit from {0, 1, 2} to spock_listener
 
-7. If everything worked, the bot should be... waving its arm every 5 seconds
+7. If everything worked, the bot should be... waving its arm occasionally (on receiving 1)
 
 
