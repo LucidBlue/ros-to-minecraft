@@ -42,7 +42,7 @@ logger = logging.getLogger('spock')
 # this is necessary to save the state of a player or mob entity
 # I will move it to a utils file when I find it is necessary elsewhere
 
-class Vec5(Info):
+class Vec5():
     
     def __init__(self, x=0.0, y=0.0, z=0.0, pitch=0.0, yaw=0.0, vec=None):
         
@@ -88,7 +88,7 @@ class Vec5(Info):
     # simply takes an angle and puts it in the range 0 to 360
     # Minecraft angles are weird, will have to adapt to their range (-90 to 90)
     # angle checking should be done elsewhere
-"""    
+    """    
     def projectAngleToCircle(angle):
 
         if angle > 360:
@@ -99,7 +99,7 @@ class Vec5(Info):
             newangle = angle
 
         return newangle
-"""    
+    """    
     
     def __str__(self):
         
@@ -135,7 +135,7 @@ class SendActionCore:
 
 
 
-@pl_announce('Movement')
+@pl_announce('SendAction')
 class SendActionPlugin:
     
     def __init__(self, ploader, settings):
@@ -180,14 +180,14 @@ class SendActionPlugin:
     def action_tick(self, name, data):
         
         try:
-            next_action = self.actions.get()
+            next_action = self.mvc.actions.get()
             # check if new location is different from old
             # some rounding is necessary, might want to change it
             # to be within some predefined error instead of truncating
             if (next_action.x != math.floor(self.clinfo.position.x)
-                    or next_action.y != math.floor(self.clinfo.position.y))
-                    or next_action.z != math.floor(self.clinfo.position.z)):
-                    or next_action.pitch != math.floor(self.clinfo.position.pitch)):
+                    or next_action.y != math.floor(self.clinfo.position.y)
+                    or next_action.z != math.floor(self.clinfo.position.z)
+                    or next_action.pitch != math.floor(self.clinfo.position.pitch)
                     or next_action.yaw != math.floor(self.clinfo.position.yaw)):
                 
                 self.updatePos(
@@ -197,6 +197,6 @@ class SendActionPlugin:
                         next_action.pitch,
                         next_action.yaw)
 
-        except actions.Empty:
+        except self.mvc.actions.Empty:
             print "actions queue is empty!"
 

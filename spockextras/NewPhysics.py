@@ -52,8 +52,8 @@ PLAYER_SPR_ACC    = 0.20
 PLAYER_GND_DRG    = 0.41
 
 # we can add more if there are more speeds that a player can move
-motions = { 'w': PLAYER_WLK_ACC
-            's': PLAYER_SPR_ACC }
+motions = { 1: PLAYER_WLK_ACC,
+            2: PLAYER_SPR_ACC }
 
 # Seems about right, not based on anything
 PLAYER_JMP_ACC    = 0.45
@@ -66,7 +66,7 @@ from spock.utils import BoundingBox, Vec3
 import logging
 logger = logging.getLogger('spock')
 
-class PhysicsCore:
+class NewPhysicsCore:
     def __init__(self, vec, pos):
     
         self.vec = vec
@@ -77,7 +77,7 @@ class PhysicsCore:
         acc = motions[motion]
 
         # as before, we assume angles are in degrees
-        angle = math.radians(angle)
+        angle = math.radians(direction)
         x = math.sin(angle)*acc
         z = math.cos(angle)*acc
         y = 0.0
@@ -90,7 +90,7 @@ class PhysicsCore:
 
         self.vec.add_vector(x=x, y=y, z=z)
 
-"""
+    """
     def jump(self):
         
         if self.pos.on_ground:
@@ -112,22 +112,22 @@ class PhysicsCore:
         z = math.cos(angle)*PLAYER_SPR_ACC
         x = math.sin(angle)*PLAYER_SPR_ACC
         self.vec.add_vector(x = x, z = z)
-"""
+    """
 
 
 
-@pl_announce('Physics')
-class PhysicsPlugin:
+@pl_announce('NewPhysics')
+class NewPhysicsPlugin:
 	def __init__(self, ploader, settings):
 		self.vec = Vec3(0.0, 0.0, 0.0)
-		self.playerbb = BoundingBox(0.8, 1.8) #wiki says 0.6 but I made it 0.8 to give a little wiggle room
+		self.playerbb = BoundingBox(0.8, 1.8)
 		self.world = ploader.requires('World')
 		self.event = ploader.requires('Event')
 		clinfo = ploader.requires('ClientInfo')
 		self.pos = clinfo.position
 		ploader.reg_event_handler('physics_tick', self.tick)
-		self.pycore = PhysicsCore(self.vec, self.pos)
-		ploader.provides('Physics', self.pycore)
+		self.pycore = NewPhysicsCore(self.vec, self.pos)
+		ploader.provides('NewPhysics', self.pycore)
 
 	def tick(self, _, __):
 		self.check_collision()
