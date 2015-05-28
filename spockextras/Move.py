@@ -5,13 +5,16 @@ created by Bradley Sheneman
 
 heavily modified from "move.py", a helper plugin created by the SpockBot devs
 
-combined ROS node and Spock plugin to control bot movement. Receives a movement command from ROS
-and sends it to Spock. command should have a packet ID. It only needs to be binary, as the
-next command will only be sent if the previous one has completed (or failed)
+Spock plugin to control bot movement. Receives a movement command from within Spock
+and puts it in a queue. a separate callback grabs from the queue and sends to Minecraft server.
 
-at this level of abstraction, actions are in the form of frames, where each frame is simply a new
-set of coordinates, body pitchation, and 'yaw' direction
-(x, y, z, deg, deg)
+at this level of abstraction, actions are in the form of frames where each frame is simply a new
+set of coordinates, body pitch, and yaw:
+
+(x, y, z, pitch, yaw)
+
+The "legality" of a move will be checked before sending to this plugin. The SendActionPlugin only
+deals with receiving frames from Spock and sending them to the server
 
 "in" messages can be the following:
     new frame
@@ -35,9 +38,10 @@ import logging
 logger = logging.getLogger('spock')
 
 
-# adds body pitchation and yaw direction to the Spock Vec3 class
+# adds body pitch and yaw direction to the Spock Vec3 class
 # this is necessary to save the state of a player or mob entity
 # I will move it to a utils file when I find it is necessary elsewhere
+
 class Vec5(Info):
     
     def __init__(self, x=0.0, y=0.0, z=0.0, pitch=0.0, yaw=0.0, vec=None):
@@ -50,8 +54,8 @@ class Vec5(Info):
             self.z = z
             # assume ALL angles are in degrees. if someone decides they like
             # radians better, this will have to be extended
-            self.pitch = self.projectAngleToCircle(pitch)
-            self.yaw = self.projectAngleToCircle(yaw)
+            self.pitch = pitch
+            self.yaw = yaw
     
    
     def add_vector(self, x=None, y=None, z=None, pitch=None, yaw=None, vec=None):
@@ -63,8 +67,8 @@ class Vec5(Info):
             self.pitch += pitch
             self.yaw += yaw
 
-            self.pitch = self.projectAngleToCircle(self.pitch)
-            self.yaw = self.projectAngleToCircle(self.yaw)
+            #self.pitch = self.projectAngleToCircle(self.pitch)
+            #self.yaw = self.projectAngleToCircle(self.yaw)
         
         else:
             if x:
@@ -75,14 +79,16 @@ class Vec5(Info):
                 self.z += z
             if pitch:
                 self.pitch += pitch
-                self.pitch = self.projectAngleToCircle(self.pitch)
+                #self.pitch = self.projectAngleToCircle(self.pitch)
             if yaw:
                 self.yaw += yaw
-                self.yaw = self.projectAngleToCircle(self.yaw)
+                #self.yaw = self.projectAngleToCircle(self.yaw)
 
 
     # simply takes an angle and puts it in the range 0 to 360
-    # aahhh Minecraft angles are weird, will have to adapt to their range (-90 to 90)
+    # Minecraft angles are weird, will have to adapt to their range (-90 to 90)
+    # angle checking should be done elsewhere
+"""    
     def projectAngleToCircle(angle):
 
         if angle > 360:
@@ -93,7 +99,7 @@ class Vec5(Info):
             newangle = angle
 
         return newangle
-    
+"""    
     
     def __str__(self):
         
@@ -101,7 +107,7 @@ class Vec5(Info):
 
 
 
-class MovementCore:
+class SendActionCore:
 
     def __init__(self):
 
@@ -130,14 +136,15 @@ class MovementCore:
 
 
 @pl_announce('Movement')
-class MovementPlugin:
+class SendActionPlugin:
     
     def __init__(self, ploader, settings):
 
         # Spock plugins required for basic functionality
         self.net = ploader.requires('Net')
         self.clinfo = ploader.requires('ClientInfo')
-        self.physics = ploader.requires('Physics')
+        # no physics necessary here...
+        #self.physics = ploader.requires('Physics')
         
         # register all event handlers for this class
         ploader.reg_event_handler('client_tick', self.client_tick)
@@ -146,8 +153,8 @@ class MovementPlugin:
         #ploader.reg_event_handler('phy_collision', self.handle_collision)
         
         # make plugin available externally
-        self.mvc = MovementCore()
-        ploader.provides('Movement', self.mvc)
+        self.mvc = SendActionCore()
+        ploader.provides('SendAction', self.mvc)
     
     
     def client_tick(self, name, data):
@@ -159,14 +166,17 @@ class MovementPlugin:
     
         self.net.push_packet('PLAY>Player Position and Look', data.get_dict())
     
-    def moveTo(x, y, z, pitch, yaw):
+    def updatePos(x, y, z, pitch, yaw):
+        
+        # kind of a hacky way to make the full, 5-element vector available externally
+        # I do not want to expose client info to the world, so I make a "Vec5" to hold the pos info
+        self.clinfo.position.x      = self.position.x       = x
+        self.clinfo.position.y      = self.position.y       = y
+        self.clinfo.position.z      = self.position.z       = z
+        self.clinfo.position.pitch  = self.position.pitch   = pitch
+        self.clinfo.position.yaw    = self.position.yaw     = yaw
 
-        self.clinfo.position.x = x
-        self.clinfo.position.y = x
-        self.clinfo.position.z = z
-        self.clinfo.position.pitch = pitch
-        self.clinfo.position.yaw = yaw
-
+    # as of now, action ticks (also physics and client ticks) are every 0.05 seconds
     def action_tick(self, name, data):
         
         try:
@@ -179,11 +189,13 @@ class MovementPlugin:
                     or next_action.z != math.floor(self.clinfo.position.z)):
                     or next_action.pitch != math.floor(self.clinfo.position.pitch)):
                     or next_action.yaw != math.floor(self.clinfo.position.yaw)):
-                self.moveTo(next_action.x,
-                            next_action.y,
-                            next_action.z,
-                            next_action.pitch,
-                            next_action.yaw)
+                
+                self.updatePos(
+                        next_action.x,
+                        next_action.y,
+                        next_action.z,
+                        next_action.pitch,
+                        next_action.yaw)
 
         except actions.Empty:
             print "actions queue is empty!"
