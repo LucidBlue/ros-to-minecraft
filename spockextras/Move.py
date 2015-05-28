@@ -188,36 +188,3 @@ class MovementPlugin:
         except actions.Empty:
             print "actions queue is empty!"
 
-
-"""
-	def do_pathfinding(self):
-		if self.mvc.move_location != None:
-			if (self.mvc.move_location.x == math.floor(self.clinfo.position.x)
-                                and self.mvc.move_location.z == math.floor(self.clinfo.position.z)):
-                            
-                            self.mvc.move_location = None;
-			else:
-				dx = self.mvc.move_location.x - self.clinfo.position.x
-				dz = self.mvc.move_location.z - self.clinfo.position.z
-				deg = 0
-				if abs(dx) >= abs(dz):
-"""
-
-	#we should go along x
-					if dx > 0:
-						#go positive x
-						deg = 90
-					else:
-						#go neg x
-						deg = 270
-
-				elif abs(dx) < abs(dz):
-					#we should go along z
-					if dz > 0:
-						#go positive z
-						deg = 0
-					else:
-						#go neg z
-						deg = 180
-
-				self.physics.walk(deg)
