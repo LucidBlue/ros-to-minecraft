@@ -4,6 +4,7 @@
 
 simple demo linking ROS to Spock (an open-source Python implementation of the Minecraft protocol)
 
+*warning* this document is out of date. will be updated soon!
 
 
 Dependencies:
