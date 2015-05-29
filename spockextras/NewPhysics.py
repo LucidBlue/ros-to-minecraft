@@ -75,11 +75,11 @@ class NewPhysicsCore:
     def move(self, direction, motion, jump):
 
         acc = motions[motion]
-
+        # print("acc: %2f") %(acc)
         # as before, we assume angles are in degrees
         angle = math.radians(direction)
-        x = math.sin(angle)*acc
-        z = math.cos(angle)*acc
+        z = math.sin(angle)*acc
+        x = math.cos(angle)*acc
         y = 0.0
 
         # jump is just True or False
@@ -87,6 +87,8 @@ class NewPhysicsCore:
             if self.pos.on_ground:
                 self.pos.on_ground = False
                 y = PLAYER_JMP_ACC
+        
+        print ("vector to be added: <%2f, %2f, %2f>") %(x, y, z)
 
         self.vec.add_vector(x=x, y=y, z=z)
 
@@ -128,13 +130,14 @@ class NewPhysicsPlugin:
 		ploader.reg_event_handler('physics_tick', self.tick)
 		self.pycore = NewPhysicsCore(self.vec, self.pos)
 		ploader.provides('NewPhysics', self.pycore)
-
+        
 	def tick(self, _, __):
 		self.check_collision()
 		self.apply_horizontal_drag()
 		self.apply_vector()
 
-	def check_collision(self):
+	
+        def check_collision(self):
 		cb = Vec3(math.floor(self.pos.x), math.floor(self.pos.y), math.floor(self.pos.z))
 		if self.block_collision(cb, y=2): #we check +2 because above my head
 			self.vec.y = 0
@@ -183,9 +186,11 @@ class NewPhysicsPlugin:
 	def apply_horizontal_drag(self):
 		self.vec.x -= self.vec.x * PLAYER_GND_DRG
 		self.vec.z -= self.vec.z * PLAYER_GND_DRG
+        
 
 	def apply_vector(self):
 		p = self.pos
 		p.x = p.x + self.vec.x
 		p.y = p.y + self.vec.y
 		p.z = p.z + self.vec.z
+        

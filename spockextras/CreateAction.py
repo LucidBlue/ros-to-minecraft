@@ -19,7 +19,10 @@ from minecraft_bot.msg import movement_msg
 from spock.utils import pl_announce
 from spock.mcp import mcdata
 from spock.utils import Vec3
-import math, Queue
+from spockextras.plugins.actionutils import Vec5
+
+import math, Queue#, thread
+
 
 import logging
 logger = logging.getLogger('spock')
@@ -30,7 +33,39 @@ logger = logging.getLogger('spock')
 
 class CreateActionCore:
     def __init__(self):
-        self.target = Vec3()
+        self.target = None
+        #self.target.pos = Vec3()
+        #self.jump = None
+        #self.speed = None
+    
+    
+    def setTarget(self, data):
+
+        # jump can cause some weird behavior. bot will continue to 'jump' until it reaches its target
+        # it is supposed to be used as a separate action from moving, but the x, y, z are still there
+        # to allow movement while jumping. use at your own risk!
+        
+        self.jump = bool(data.jump)
+        self.speed = data.speed
+        
+        x = float(data.x)
+        y = float(data.y)
+        z = float(data.z)
+        
+        self.target = Vec3(x=x, y=y, z=z)
+        
+        """
+        print ("old pos: %2f, %2f, %2f") %(
+                self.clinfo.position.x,
+                self.clinfo.position.y,
+                self.clinfo.position.z)
+        """
+        print ("target pos: %2f, %2f, %2f") %(
+                self.target.x,
+                self.target.y,
+                self.target.z)
+        
+
 
 
 
@@ -39,54 +74,73 @@ class CreateActionPlugin:
     
     def __init__(self, ploader, settings):
         
+        self.net = ploader.requires('Net')
+        self.clinfo = ploader.requires('ClientInfo')
         self.phys = ploader.requires('NewPhysics')
-        self.act = ploader.requires('SendAction')
+
+        ploader.reg_event_handler('client_tick', self.client_tick)
+        ploader.reg_event_handler('action_tick', self.action_tick)
+        ploader.reg_event_handler('cl_position_update', self.handle_position_update)
+        
         self.cac = CreateActionCore()
         ploader.provides('CreateAction', self.cac)    
-        
-        self.mainLoop()
+        self.startMovementNode()
 
-    def mainLoop(self):
+    def startMovementNode(self):
 
         rospy.init_node('movement_listener')
         print("movement listener node initialized")
 
-        rospy.Subscriber('movement_cmd', movement_msg, self.doMovement)
+        rospy.Subscriber('movement_cmd', movement_msg, self.cac.setTarget)
         
-        rospy.spin()
-
-    def doMovement(self, data):
-
-        # jump can cause some weird behavior. bot will continue to 'jump' until it reaches its target
-        # it is supposed to be used as a separate action from moving, but the x, y, z are still there
-        # to allow movement while jumping. use at your own risk!
-        jump = bool(data.jump)
-        speed = data.speed
-        self.cac.target.x = float(data.x)
-        self.cac.target.y = float(data.y)
-        self.cac.target.z = float(data.z)
-        print ("received command: %2f, %2f, %2f") %(data.x, data.y, data.z)
-        # as long as we have not reached our target, update position and calculate new frame
-        # also push the frame to 'actions' queue to make available for the action sender
-        while (     self.cac.target.x != math.floor(self.act.position.x)
-                and self.cac.target.y != math.floor(self.act.position.y)
-                and self.cac.target.z != math.floor(self.act.position.z)):
-	
-            direction = self.getAngle(self.cac.target.x, self.cac.target.z)
-            self.phys.move(direction, speed, jump)
-            print ("moving in direction: %2f") %(direction)
-            self.act.actions.put(self.phys.vec)
-
-
+        #rospy.spin()
+    
+    
+    def client_tick(self, name, data):
+        print("client tick")
+        self.net.push_packet('PLAY>Player Position', self.clinfo.position.get_dict())
+    
+    
+    def handle_position_update(self, name, data):
+        print("position update")
+        self.net.push_packet('PLAY>Player Position and Look', data.get_dict())
+ 
     def getAngle(self, x, z):
 
         # from positive x axis (east)
         # where z is south
-        dx = x - self.act.position.x
-        dz = z - self.act.position.z
+        dx = x - self.clinfo.position.x
+        dz = z - self.clinfo.position.z
+        #print("dx: %2f dz: %2f") %(dx, dz)
         
-        angle = math.degrees(math.atan(-dz/dx))
-        if dx < 0:
-            angle += 180
+        if dx == 0:
+            angle = math.copysign(180, dz)
+        else:
+            angle = math.degrees(math.atan(dz/dx))
+            if dx < 0:
+                angle += 180
         
         return angle
+
+    def action_tick(self, name, data):
+        
+        self.doMovement()
+
+
+    def doMovement(self):
+        
+        #print ("speed is %d") %(speed)
+        # as long as we have not reached our target, update position and calculate new frame
+        # also push the frame to 'actions' queue to make available for the action sender
+        
+        """
+        if (     self.cac.target.x != math.floor(self.clinfo.position.x)
+                and self.cac.target.y != math.floor(self.clinfo.position.y)
+                and self.cac.target.z != math.floor(self.clinfo.position.z)):
+	"""
+        if (self.cac.target != None):
+            direction = self.getAngle(self.cac.target.x, self.cac.target.z)
+            print ("current pos: " + str(self.clinfo.position))
+            #self.act.actions.put((direction, self.cac.target.speed, self.cac.target.jump))
+            self.phys.move(direction, self.cac.speed, self.cac.jump)
+       

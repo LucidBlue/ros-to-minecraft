@@ -19,17 +19,17 @@ print("movement sender node initialized")
 """
 
 move around in a triangle
-<-20, 13, -40>
-<-20, 13, -60>
-<0  , 13, -50>
+<-25, 13, -40>
+<-25, 13, -60>
+<-10  , 13, -50>
 
 
 """
 
 positions = [
-        (-20., 13., -40.),
-        (-20., 13., -60.),
-        (0., 13., -50.)]
+        (-25., 13., -40.),
+        (-25., 13., -60.),
+        (-10., 13., -50.)]
 
 while not rospy.is_shutdown():
 
@@ -44,5 +44,5 @@ while not rospy.is_shutdown():
     
         mv_pub.publish(message)
         print ("sent command: %2f, %2f, %2f") %(message.x, message.y, message.z)
-        rospy.sleep(5.)
+        rospy.sleep(8.)
 

@@ -30,7 +30,7 @@ deals with receiving frames from Spock and sending them to the server
 from spock.utils import pl_announce
 from spock.mcp import mcdata
 from spock.utils import Vec3
-
+from spockextras.plugins.actionutils import Vec5
 
 import math, Queue
 
@@ -38,80 +38,12 @@ import logging
 logger = logging.getLogger('spock')
 
 
-# adds body pitch and yaw direction to the Spock Vec3 class
-# this is necessary to save the state of a player or mob entity
-# I will move it to a utils file when I find it is necessary elsewhere
-
-class Vec5():
-    
-    def __init__(self, x=0.0, y=0.0, z=0.0, pitch=0.0, yaw=0.0, vec=None):
-        
-        if vec:
-            self.x, self.y, self.z, self.pitch, self.yaw= vec[:5]
-        else:
-            self.x = x
-            self.y = y
-            self.z = z
-            # assume ALL angles are in degrees. if someone decides they like
-            # radians better, this will have to be extended
-            self.pitch = pitch
-            self.yaw = yaw
-    
-   
-    def add_vector(self, x=None, y=None, z=None, pitch=None, yaw=None, vec=None):
-        
-        if vec:
-            self.x += vec.x
-            self.y += vec.y
-            self.z += vec.z
-            self.pitch += pitch
-            self.yaw += yaw
-
-            #self.pitch = self.projectAngleToCircle(self.pitch)
-            #self.yaw = self.projectAngleToCircle(self.yaw)
-        
-        else:
-            if x:
-                self.x += x
-            if y:
-                self.y += y
-            if z:
-                self.z += z
-            if pitch:
-                self.pitch += pitch
-                #self.pitch = self.projectAngleToCircle(self.pitch)
-            if yaw:
-                self.yaw += yaw
-                #self.yaw = self.projectAngleToCircle(self.yaw)
-
-
-    # simply takes an angle and puts it in the range 0 to 360
-    # Minecraft angles are weird, will have to adapt to their range (-90 to 90)
-    # angle checking should be done elsewhere
-    """    
-    def projectAngleToCircle(angle):
-
-        if angle > 360:
-            newangle = angle - 360*math.floor(angle/360.0)
-        else if angle < 0:
-            newangle = angle + 360*(1 + math.floor(abs(angle/360.0)))
-        else:
-            newangle = angle
-
-        return newangle
-    """    
-    
-    def __str__(self):
-        
-        return "({:.2f}, {:.2f}, {:.2f}, {:.2f}, {:.2f})".format(self.x, self.y, self.z, self.pitch, self.yaw)
-
-
 
 class SendActionCore:
 
     def __init__(self):
 
-        self.position = Vec5()
+        #self.position = Vec5()
         self.actions = Queue.Queue()
         self.is_moving = False
 
@@ -128,11 +60,11 @@ class SendActionCore:
   
         actions.clear()
 
-
+    """
     def getPosition():
 
         return self.position
-
+    """
 
 
 @pl_announce('SendAction')
@@ -166,21 +98,31 @@ class SendActionPlugin:
     
         self.net.push_packet('PLAY>Player Position and Look', data.get_dict())
     
-    def updatePos(x, y, z, pitch, yaw):
+    def updatePos(self, x, y, z, pitch, yaw):
         
         # kind of a hacky way to make the full, 5-element vector available externally
         # I do not want to expose client info to the world, so I make a "Vec5" to hold the pos info
-        self.clinfo.position.x      = self.position.x       = x
-        self.clinfo.position.y      = self.position.y       = y
-        self.clinfo.position.z      = self.position.z       = z
-        self.clinfo.position.pitch  = self.position.pitch   = pitch
-        self.clinfo.position.yaw    = self.position.yaw     = yaw
+        #self.mvc.position.x       += x
+        #self.mvc.position.y       += y
+        #self.mvc.position.z       += z
+        #self.mvc.position.pitch   += pitch
+        #self.mvc.position.yaw     += yaw
+
+        #self.clinfo.position.x += x
+        #self.clinfo.position.y += y
+        #self.clinfo.position.z += z
+        #self.clinfo.position.pitch += pitch
+        #self.clinfo.position.yaw += yaw
+        self.physics.move()
+        #print ("new pos:")
+        #print (self.clinfo.position)
 
     # as of now, action ticks (also physics and client ticks) are every 0.05 seconds
     def action_tick(self, name, data):
         
         try:
             next_action = self.mvc.actions.get()
+            #print(next_action)
             # check if new location is different from old
             # some rounding is necessary, might want to change it
             # to be within some predefined error instead of truncating
@@ -197,6 +139,6 @@ class SendActionPlugin:
                         next_action.pitch,
                         next_action.yaw)
 
-        except self.mvc.actions.Empty:
+        except Queue.Empty:
             print "actions queue is empty!"
 
