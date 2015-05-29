@@ -21,7 +21,7 @@ from spock.mcp import mcdata
 from spock.utils import Vec3
 from spockextras.plugins.actionutils import Vec5
 
-import math, Queue#, thread
+import math, Queue
 
 
 import logging
@@ -33,10 +33,8 @@ logger = logging.getLogger('spock')
 
 class CreateActionCore:
     def __init__(self):
+
         self.target = None
-        #self.target.pos = Vec3()
-        #self.jump = None
-        #self.speed = None
     
     
     def setTarget(self, data):
@@ -53,19 +51,11 @@ class CreateActionCore:
         z = float(data.z)
         
         self.target = Vec3(x=x, y=y, z=z)
-        
-        """
-        print ("old pos: %2f, %2f, %2f") %(
-                self.clinfo.position.x,
-                self.clinfo.position.y,
-                self.clinfo.position.z)
-        """
-        print ("target pos: %2f, %2f, %2f") %(
-                self.target.x,
-                self.target.y,
-                self.target.z)
-        
-
+                
+        # print ("target pos: %2f, %2f, %2f") %(
+        #        self.target.x,
+        #        self.target.y,
+        #        self.target.z)
 
 
 
@@ -92,17 +82,15 @@ class CreateActionPlugin:
         print("movement listener node initialized")
 
         rospy.Subscriber('movement_cmd', movement_msg, self.cac.setTarget)
-        
-        #rospy.spin()
     
     
     def client_tick(self, name, data):
-        print("client tick")
+        
         self.net.push_packet('PLAY>Player Position', self.clinfo.position.get_dict())
     
     
     def handle_position_update(self, name, data):
-        print("position update")
+        
         self.net.push_packet('PLAY>Player Position and Look', data.get_dict())
  
     def getAngle(self, x, z):
@@ -111,7 +99,6 @@ class CreateActionPlugin:
         # where z is south
         dx = x - self.clinfo.position.x
         dz = z - self.clinfo.position.z
-        #print("dx: %2f dz: %2f") %(dx, dz)
         
         if dx == 0:
             angle = math.copysign(180, dz)
@@ -122,6 +109,7 @@ class CreateActionPlugin:
         
         return angle
 
+
     def action_tick(self, name, data):
         
         self.doMovement()
@@ -129,7 +117,6 @@ class CreateActionPlugin:
 
     def doMovement(self):
         
-        #print ("speed is %d") %(speed)
         # as long as we have not reached our target, update position and calculate new frame
         # also push the frame to 'actions' queue to make available for the action sender
         
@@ -141,6 +128,4 @@ class CreateActionPlugin:
         if (self.cac.target != None):
             direction = self.getAngle(self.cac.target.x, self.cac.target.z)
             print ("current pos: " + str(self.clinfo.position))
-            #self.act.actions.put((direction, self.cac.target.speed, self.cac.target.jump))
             self.phys.move(direction, self.cac.speed, self.cac.jump)
-       

@@ -75,46 +75,19 @@ class NewPhysicsCore:
     def move(self, direction, motion, jump):
 
         acc = motions[motion]
-        # print("acc: %2f") %(acc)
+
         # as before, we assume angles are in degrees
         angle = math.radians(direction)
         z = math.sin(angle)*acc
         x = math.cos(angle)*acc
         y = 0.0
 
-        # jump is just True or False
         if jump:
             if self.pos.on_ground:
                 self.pos.on_ground = False
                 y = PLAYER_JMP_ACC
         
-        print ("vector to be added: <%2f, %2f, %2f>") %(x, y, z)
-
         self.vec.add_vector(x=x, y=y, z=z)
-
-    """
-    def jump(self):
-        
-        if self.pos.on_ground:
-            self.pos.on_ground = False
-            self.vec.add_vector(y = PLAYER_JMP_ACC)
-    
-    
-    def walk(self, angle):
-        
-        angle = math.radians(angle)
-	z = math.cos(angle)*PLAYER_WLK_ACC
-	x = math.sin(angle)*PLAYER_WLK_ACC
-	self.vec.add_vector(x = x, z = z)
-
-
-    def sprint(self, angle):
-        
-        angle = math.radians(angle)
-        z = math.cos(angle)*PLAYER_SPR_ACC
-        x = math.sin(angle)*PLAYER_SPR_ACC
-        self.vec.add_vector(x = x, z = z)
-    """
 
 
 
