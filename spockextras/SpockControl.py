@@ -11,7 +11,7 @@ currently the ROS message is passed along unmodified. this may need to change la
 
 import roslib; roslib.load_manifest('minecraft_bot')
 import rospy
-from minecraft_bot.msg import movement_msg
+from minecraft_bot.msg import movement_msg, place_block_msg, mine_block_msg
 
 
 from spock.mcp import mcdata
@@ -53,8 +53,8 @@ class SpockControlPlugin:
 	
         # subscribe to Spock related data streams from ROS
 	rospy.Subscriber('movement_data', movement_msg, self.moveTo, queue_size=1)
-	#rospy.Subscriber('mine_data', mine_block_msg, self.mineBlock, queue_size=1)
-	#rospy.Subscriber('place_data', place_block_msg, self.placeBlock, queue_size=1)
+	rospy.Subscriber('mine_block_data', mine_block_msg, self.mineBlock, queue_size=1)
+	rospy.Subscriber('place_block_data', place_block_msg, self.placeBlock, queue_size=1)
 
     # ROS Subscriber callbacks simply pass data along to the Spock event handlers
     def moveTo(self, data):
