@@ -11,7 +11,7 @@ from minecraft_bot.msg import movement_msg
 
 
 
-mv_pub = rospy.Publisher('movement_cmd', movement_msg, queue_size=1)
+mv_pub = rospy.Publisher('movement_data', movement_msg, queue_size=1)
 
 rospy.init_node('movement_sender')
 print("movement sender node initialized")

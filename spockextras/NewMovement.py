@@ -11,11 +11,6 @@ are composed of at the low level
 
 
 """
-
-import roslib; roslib.load_manifest('minecraft_bot')
-import rospy
-from minecraft_bot.msg import movement_msg
-
 from spock.utils import pl_announce
 from spock.mcp import mcdata
 from spock.utils import Vec3
@@ -69,12 +64,13 @@ class NewMovementPlugin:
         self.clinfo = ploader.requires('ClientInfo')
         self.phys = ploader.requires('NewPhysics')
         
-        ploader.reg_event_handler('ros_moveto', self.setTarget)
+        self.mvc = NewMovementCore()
+        
+        ploader.reg_event_handler('ros_moveto', self.rosMoveTo)
         ploader.reg_event_handler('client_tick', self.clientTick)
         ploader.reg_event_handler('action_tick', self.actionTick)
         ploader.reg_event_handler('cl_position_update', self.handlePosUpdate)
         
-        self.mvc = NewMovementCore()
         ploader.provides('NewMovement', self.mvc)    
         # self.startMovementNode()
     
@@ -85,6 +81,10 @@ class NewMovementPlugin:
 #        print("movement listener node initialized")
 #
 #        rospy.Subscriber('movement_cmd', movement_msg, self.cac.setTarget)
+
+    def rosMoveTo(self, name, data):
+
+        self.mvc.setTarget(data)
 
 
     def clientTick(self, name, data):
