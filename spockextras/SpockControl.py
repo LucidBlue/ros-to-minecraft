@@ -60,14 +60,16 @@ class SpockControlPlugin:
     def moveTo(self, data):
 
         self.event.emit('ros_moveto', data)
-        print("emit event moveto")
+        print("emitting event ros_moveto")
 
     
     def mineBlock(self, data):
 
         self.event.emit('ros_mineblock', data)
+        print("emitting event ros_mineblock")
     
     
     def placeBlock(self, data):
 
         self.event.emit('ros_placeblock', data)
+        print("emitting event ros_placeblock")

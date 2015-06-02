@@ -27,11 +27,12 @@ class MineAndPlacePlugin:
         self.net = ploader.requires('Net')
         
         ploader.reg_event_handler('ros_placeblock', self.handle_place)
-        ploader.reg_event_handler('ros_breakblock', self.handle_break)
+        ploader.reg_event_handler('ros_mineblock', self.handle_break)
         
         self.mpc = MineAndPlaceCore()
         ploader.provides('MineAndPlace', self.mpc)
         
+        #print("mine and place plugin was loaded...")
         #self.startMineAndPlaceNode()
     
    
@@ -60,7 +61,7 @@ class MineAndPlacePlugin:
     def handle_break(self, event, data):
         
         #args = data['args']
-
+        print("received command ros_mineblock")
         block_data = {
                 'location':     {'x': int(data.x),'y': int(data.y),'z': int(data.z)},
                 'status':       int(data.status),
