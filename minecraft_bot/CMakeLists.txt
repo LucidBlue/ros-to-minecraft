@@ -9,7 +9,10 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   message_generation
+  #octomap 1.6 REQUIRED
 )
+#find_package(octomap 1.6 REQUIRED)
+#include_directories(${OCTOMAP_INCLUDE_DIRS})
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -48,6 +51,9 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
    FILES
    controller_msg.msg
+   movement_msg.msg
+   mine_block_msg.msg
+   place_block_msg.msg
  )
 
 ## Generate services in the 'srv' folder
@@ -95,6 +101,9 @@ catkin_package(
 # include_directories(include)
 include_directories(
   ${catkin_INCLUDE_DIRS}
+  /home/brad/src/opencog
+  /home/brad/src/opencog/build
+  #${OCTOMAP_INCLUDE_DIRS}
 )
 
 ## Declare a cpp library
@@ -105,13 +114,21 @@ include_directories(
 ## Declare a cpp executable
 # add_executable(minecraft_bot_node src/minecraft_bot_node.cpp)
 
+add_executable(talker src/cpp_publisher.cc)
+target_link_libraries(talker ${catkin_LIBRARIES})
+#add_dependencies(talker beginner_tutorials_generate_messages_cpp)
+
+add_executable(listener src/cpp_subscriber.cc)
+target_link_libraries(listener ${catkin_LIBRARIES})
+#add_dependencies(listener beginner_tutorials_generate_messages_cpp)
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
 # add_dependencies(minecraft_bot_node minecraft_bot_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(minecraft_bot_node
+#target_link_libraries(minecraft_bot_node
 #   ${catkin_LIBRARIES}
+#   ${OCTOMAP_LIBRARIES}
 # )
 
 #############
