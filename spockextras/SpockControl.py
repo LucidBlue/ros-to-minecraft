@@ -40,6 +40,13 @@ class SpockControlPlugin:
         ploader.requires('NewMovement')
         ploader.requires('MineAndPlace')
 
+        ploader.reg_event_handler('ros_time_update', sendUpdateTime)
+        ploader.reg_event_handler('ros_new_dimension', sendNewDimension)
+        ploader.reg_event_handler('ros_chunk_data', sendChunkData)
+        ploader.reg_event_handler('ros_chunk_bulk', sendChunkBulk)
+        ploader.reg_event_handler('ros_block_update', sendBlockUpdate)
+        ploader.reg_event_handler('ros_world_reset', sendWorldReset)
+
         self.scc = SpockControlCore()
         ploader.provides('SpockControl', self.scc)
         
@@ -56,7 +63,14 @@ class SpockControlPlugin:
 	rospy.Subscriber('mine_block_data', mine_block_msg, self.mineBlock, queue_size=1)
 	rospy.Subscriber('place_block_data', place_block_msg, self.placeBlock, queue_size=1)
 
-    # ROS Subscriber callbacks simply pass data along to the Spock event handlers
+        pub_time =      rospy.Publisher('time_data', time_msg, queue_size = 1)
+        pub_dim =       rospy.Publisher('dimension_data', time_msg, queue_size = 1)
+        pub_chunk =     rospy.Publisher('chunk_data', chunk_msg, queue_size = 1000)
+        pub_block =     rospy.Publisher('block_data', block_msg, queue_size = 1000)
+        pub_bulk =      rospy.Publisher('chunk_bulk', chunk_bulk_msg, queue_size = 1000)
+        pub_wstate =    rospy.Publisher('world_state', world_state_msg, queue_size = 1)
+
+    ### ROS Subscriber callbacks simply pass data along to the Spock event handlers
     def moveTo(self, data):
 
         self.event.emit('ros_moveto', data)
@@ -73,3 +87,37 @@ class SpockControlPlugin:
 
         self.event.emit('ros_placeblock', data)
         print("emitting event ros_placeblock")
+
+
+    
+    ### Perception handlers. Invoke ROS Publishers
+
+    def sendTimeUpdate(self, data):
+        
+        pub_time.publish(data)
+    
+    
+    def sendNewDimension(self, data):
+        
+        pub_dim.publish(data)
+    
+    
+    def sendChunkData(self, data):
+        
+        pub_chunk.publish(data)
+    
+    
+    def sendChunkBulk(self, data):
+        
+        pub_bulk.publish(data)
+    
+    
+    def sendBlockUpdate(self, data):
+        
+        pub_block.publish(data)
+    
+    
+    def sendTimeUpdate(self, data):
+        
+        pub_wstate.publish(data)
+
