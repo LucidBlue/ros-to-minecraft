@@ -13,7 +13,7 @@ from spock.mcp import mcdata
 
 class SendMapDataCore():
     
-    def __init__():
+    def __init__(self):
         pass
 
 
@@ -52,24 +52,30 @@ class SendMapDataPlugin:
     #Time Update - Update World Time
     def handleTimeUpdate(self, name, packet):
         
+        #print "received time update:"
+        #print packet
         self.event.emit('ros_time_update', packet.data)
 
     
     #Join Game/Respawn - New Dimension
     def handleNewDimension(self, name, packet):
         
+        #print packet
         self.event.emit('ros_new_dimension', packet.data['dimension'])
 
     
     #Chunk Data - Update World state
     def handleChunkData(self, name, packet):
         
+        #print packet
         self.event.emit('ros_chunk_data', packet.data)
 
     
     #Multi Block Change - Update multiple blocks
     def handleBlockChangeMulti(self, name, packet):
         
+        #print "multiple block change:"
+        #print packet
         chunk_x = packet.data['chunk_x']*16
         chunk_z = packet.data['chunk_z']*16
         
@@ -77,7 +83,6 @@ class SendMapDataPlugin:
             x = block['x'] + chunk_x
             z = block['z'] + chunk_z
             y = block['y']
-            self.world.set_block(x, y, z, data = block['block_data'])
             self.event.emit('ros_block_update', {
                 'location': {
                     'x': x,
@@ -91,12 +96,16 @@ class SendMapDataPlugin:
     #Block Change - Update a single block
     def handleBlockChange(self, name, packet):
         
+        #print "block change"
+        #print packet
         self.event.emit('ros_block_update', packet.data)
 
 
     #Map Chunk Bulk - Update World state
     def handleChunkBulk(self, name, packet):
         
+        #print "bulk chunk data"
+        #print packet
         self.event.emit('ros_chunk_bulk', packet.data)
     
     

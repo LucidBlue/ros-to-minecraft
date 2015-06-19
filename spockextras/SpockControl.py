@@ -12,6 +12,7 @@ currently the ROS message is passed along unmodified. this may need to change la
 import roslib; roslib.load_manifest('minecraft_bot')
 import rospy
 from minecraft_bot.msg import movement_msg, place_block_msg, mine_block_msg
+from minecraft_bot.msg import chunk_data_msg, chunk_bulk_msg, chunk_meta_msg, block_data_msg
 
 
 from spock.mcp import mcdata
@@ -37,15 +38,16 @@ class SpockControlPlugin:
         self.event = ploader.requires('Event')
         
         # simply load all of the plugins
-        ploader.requires('NewMovement')
-        ploader.requires('MineAndPlace')
+        #ploader.requires('NewMovement')
+        #ploader.requires('MineAndPlace')
+        ploader.requires('SendMapData')
 
-        ploader.reg_event_handler('ros_time_update', sendUpdateTime)
-        ploader.reg_event_handler('ros_new_dimension', sendNewDimension)
-        ploader.reg_event_handler('ros_chunk_data', sendChunkData)
-        ploader.reg_event_handler('ros_chunk_bulk', sendChunkBulk)
-        ploader.reg_event_handler('ros_block_update', sendBlockUpdate)
-        ploader.reg_event_handler('ros_world_reset', sendWorldReset)
+        #ploader.reg_event_handler('ros_time_update', self.sendTimeUpdate)
+        #ploader.reg_event_handler('ros_new_dimension', self.sendNewDimension)
+        ploader.reg_event_handler('ros_chunk_data', self.sendChunkData)
+        ploader.reg_event_handler('ros_chunk_bulk', self.sendChunkBulk)
+        ploader.reg_event_handler('ros_block_update', self.sendBlockUpdate)
+        #ploader.reg_event_handler('ros_world_reset', self.sendWorldReset)
 
         self.scc = SpockControlCore()
         ploader.provides('SpockControl', self.scc)
@@ -59,16 +61,16 @@ class SpockControlPlugin:
 	print("spock control node initialized")
 	
         # subscribe to Spock related data streams from ROS
-	rospy.Subscriber('movement_data', movement_msg, self.moveTo, queue_size=1)
-	rospy.Subscriber('mine_block_data', mine_block_msg, self.mineBlock, queue_size=1)
-	rospy.Subscriber('place_block_data', place_block_msg, self.placeBlock, queue_size=1)
+	#rospy.Subscriber('movement_data', movement_msg, self.moveTo, queue_size=1)
+	#rospy.Subscriber('mine_block_data', mine_block_msg, self.mineBlock, queue_size=1)
+	#rospy.Subscriber('place_block_data', place_block_msg, self.placeBlock, queue_size=1)
 
-        pub_time =      rospy.Publisher('time_data', time_msg, queue_size = 1)
-        pub_dim =       rospy.Publisher('dimension_data', time_msg, queue_size = 1)
-        pub_chunk =     rospy.Publisher('chunk_data', chunk_msg, queue_size = 1000)
-        pub_block =     rospy.Publisher('block_data', block_msg, queue_size = 1000)
-        pub_bulk =      rospy.Publisher('chunk_bulk', chunk_bulk_msg, queue_size = 1000)
-        pub_wstate =    rospy.Publisher('world_state', world_state_msg, queue_size = 1)
+        #self.pub_time =      rospy.Publisher('time_data', time_msg, queue_size = 1)
+        #self.pub_dim =       rospy.Publisher('dimension_data', dim_msg, queue_size = 1)
+        self.pub_chunk =     rospy.Publisher('chunk_data', chunk_data_msg, queue_size = 1000)
+        self.pub_block =     rospy.Publisher('block_data', block_data_msg, queue_size = 1000)
+        self.pub_bulk =      rospy.Publisher('chunk_bulk', chunk_bulk_msg, queue_size = 1000)
+        #pub_wstate =    rospy.Publisher('world_state', world_state_msg, queue_size = 1)
 
     ### ROS Subscriber callbacks simply pass data along to the Spock event handlers
     def moveTo(self, data):
@@ -91,9 +93,11 @@ class SpockControlPlugin:
 
     
     ### Perception handlers. Invoke ROS Publishers
-
-    def sendTimeUpdate(self, data):
+    """
+    def sendTimeUpdate(self, name, data):
         
+        msg = time_msg()
+
         pub_time.publish(data)
     
     
@@ -101,23 +105,57 @@ class SpockControlPlugin:
         
         pub_dim.publish(data)
     
-    
-    def sendChunkData(self, data):
+    """
+
+    def sendChunkData(self, name, data):
         
-        pub_chunk.publish(data)
+        msg = chunk_data_msg()
+        msg.chunk_x = data['chunk_x']
+        msg.chunk_z = data['chunk_z']
+        msg.continuous = data['continuous']
+        msg.primary_bitmap = data['primary_bitmap']
+        msg.data = data['data']
+        #print "sent chunk data message"
+        #print msg
+        self.pub_chunk.publish(msg)
     
     
-    def sendChunkBulk(self, data):
+    def sendChunkBulk(self, name, data):
         
-        pub_bulk.publish(data)
-    
-    
-    def sendBlockUpdate(self, data):
+        msg = chunk_bulk_msg()
         
-        pub_block.publish(data)
+        meta = []
+        for i in range(len(data['metadata'])):
+            meta.append(chunk_meta_msg())
+            meta[i].chunk_x = data['metadata'][i]['chunk_x']
+            meta[i].chunk_z = data['metadata'][i]['chunk_z']
+            # bulk chunk packet doesn't have continuous field?
+	    #meta[i].continuous = data['metadata'][i]['continuous']
+            meta[i].primary_bitmap = data['metadata'][i]['primary_bitmap']
+
+        msg.sky_light = data['sky_light']
+	msg.metadata = meta
+        msg.data = data['data']
+
+        #print "sent chunk bulk message"
+        #print msg
+        self.pub_bulk.publish(msg)
     
     
-    def sendTimeUpdate(self, data):
+    def sendBlockUpdate(self, name, data):
+        
+        msg = block_data_msg()
+        msg.blockid = data['block_data']
+        msg.x = data['location']['x']
+        msg.y = data['location']['y']
+        msg.z = data['location']['z']
+        #print "sent block data message"
+        #print msg
+        self.pub_block.publish(msg)
+    
+    
+    """
+    def sendWorldReset(self, name, data):
         
         pub_wstate.publish(data)
-
+    """

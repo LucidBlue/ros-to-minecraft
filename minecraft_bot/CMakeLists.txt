@@ -59,6 +59,7 @@ add_message_files(
    place_block_msg.msg
    chunk_data_msg.msg
    chunk_bulk_msg.msg
+   chunk_meta_msg.msg
    block_data_msg.msg
  )
 
