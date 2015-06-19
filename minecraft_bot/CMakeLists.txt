@@ -9,8 +9,11 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   message_generation
-  #octomap 1.6 REQUIRED
+  )
+find_package(octomap
 )
+
+#find_package(opencog REQUIRED)
 #find_package(octomap 1.6 REQUIRED)
 #include_directories(${OCTOMAP_INCLUDE_DIRS})
 
@@ -54,6 +57,9 @@ add_message_files(
    movement_msg.msg
    mine_block_msg.msg
    place_block_msg.msg
+   chunk_data_msg.msg
+   chunk_bulk_msg.msg
+   block_data_msg.msg
  )
 
 ## Generate services in the 'srv' folder
@@ -88,8 +94,16 @@ add_message_files(
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES minecraft_bot
-  CATKIN_DEPENDS roscpp rospy std_msgs message_runtime
-  DEPENDS system_lib
+  CATKIN_DEPENDS
+  	roscpp
+	rospy
+	std_msgs
+	message_runtime
+  DEPENDS
+  	octomap
+	octomap_ros
+	octomap_msgs
+	octomap_server
 )
 
 ###########
@@ -101,11 +115,16 @@ catkin_package(
 # include_directories(include)
 include_directories(
   ${catkin_INCLUDE_DIRS}
-  /home/brad/src/opencog
-  /home/brad/src/opencog/build
-  #${OCTOMAP_INCLUDE_DIRS}
+  #${OPENCOG_SOURCE_DIR}
+  #${PYTHON_INCLUDE_PATH}
+  #${CMAKE_SOURCE_DIR}
+  #${CMAKE_BINARY_DIR}
+  #/home/brad/src/opencog
+  #/home/brad/src/opencog/build
+  ${OCTOMAP_INCLUDE_DIRS}
 )
 
+link_libraries(${OCTOMAP_LIBRARIES})
 ## Declare a cpp library
 # add_library(minecraft_bot
 #   src/${PROJECT_NAME}/minecraft_bot.cpp
@@ -114,12 +133,16 @@ include_directories(
 ## Declare a cpp executable
 # add_executable(minecraft_bot_node src/minecraft_bot_node.cpp)
 
-add_executable(talker src/cpp_publisher.cc)
+
+add_executable(talker src/cpp_practice/cpp_publisher.cc)
 target_link_libraries(talker ${catkin_LIBRARIES})
 #add_dependencies(talker beginner_tutorials_generate_messages_cpp)
 
-add_executable(listener src/cpp_subscriber.cc)
+add_executable(listener src/cpp_practice/cpp_subscriber.cc)
 target_link_libraries(listener ${catkin_LIBRARIES})
+
+add_executable(testoct src/octomap/octomap_simple.cc)
+target_link_libraries(testoct ${CATKIN_LIBRARIES})
 #add_dependencies(listener beginner_tutorials_generate_messages_cpp)
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
