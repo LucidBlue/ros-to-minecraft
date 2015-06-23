@@ -61,6 +61,7 @@ add_message_files(
    chunk_bulk_msg.msg
    chunk_meta_msg.msg
    block_data_msg.msg
+   map_block_msg.msg
  )
 
 ## Generate services in the 'srv' folder

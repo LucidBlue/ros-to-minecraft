@@ -44,9 +44,9 @@ class SpockControlPlugin:
 
         #ploader.reg_event_handler('ros_time_update', self.sendTimeUpdate)
         #ploader.reg_event_handler('ros_new_dimension', self.sendNewDimension)
-        ploader.reg_event_handler('ros_chunk_data', self.sendChunkData)
+        #ploader.reg_event_handler('ros_chunk_data', self.sendChunkData)
         ploader.reg_event_handler('ros_chunk_bulk', self.sendChunkBulk)
-        ploader.reg_event_handler('ros_block_update', self.sendBlockUpdate)
+        #ploader.reg_event_handler('ros_block_update', self.sendBlockUpdate)
         #ploader.reg_event_handler('ros_world_reset', self.sendWorldReset)
 
         self.scc = SpockControlCore()

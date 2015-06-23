@@ -1,4 +1,4 @@
 uint16 blockid
-int64 x
-int64 y
-int64 z
+float64 x
+float64 y
+float64 z
