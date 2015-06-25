@@ -205,11 +205,10 @@ def handleChunkBulk(data):
         # Unpack the chunk column data
         column = ChunkColumn()
         column.unpack(bbuff, mask, skylight)
-
+        count = 0
         for x in range(16):
             for z in range(16):
                 for y in range(256):
-
                     msg = map_block_msg()
                     msg.x = x + chunk_x
                     msg.y = y
@@ -219,32 +218,82 @@ def handleChunkBulk(data):
 
                     msg.blockid = block_id
                     msg.meta = block_meta
-                    blockpub.publish(msg)
-                    print msg
+                    # in other words, if not air...
+                    if block_id != 0:
+                        blockpub.publish(msg)
+                        #print msg
+                        #count+=1
+        #print "number of blocks sent"
+        #print count
 
 
 
-"""	
+
 def handleChunkData(data):
     
-    x_chunk = data['chunk_x']
-    z_chunk = data['chunk_z']
-    mask = data['primary_bitmap']
-    continuous = data['continuous']
-    bbuff = utils.BoundBuffer(data['data'])
+    chunk_x = data.chunk_x
+    chunk_z = data.chunk_z
+    mask = data.primary_bitmap
+    continuous = data.continuous
+    bbuff = utils.BoundBuffer(data.data)
     if self.dimension == DIMENSION_OVERWOLD:
         skylight = True
     else:
         skylight = False
     key = (x_chunk, z_chunk)
     
-    if key not in self.columns:
-        self.columns[key] = ChunkColumn()
+    column = ChunkColumn()
     
-    self.columns[key].unpack(bbuff, mask, skylight, continuous)
-	
+    column.unpack(bbuff, mask, skylight, continuous)
+    
+    for x in range(16):
+        for z in range(16):
+            for y in range(256):
+                msg = map_block_msg()
+                msg.x = x + chunk_x
+                msg.y = y
+                msg.z = z + chunk_z
+                
+                block_id, block_meta = column.get_block(msg.x, msg.y, msg.z)
 
-        def handleBlockData(self, x, y, z, block_id = None, meta = None, data = None):
+                msg.blockid = block_id
+                msg.meta = block_meta
+                
+                # in other words, if not air...
+                if block_id != 0:
+                    blockpub.publish(msg)
+                    #print msg
+                    #count+=1
+    
+    #print "number of blocks sent"
+    #print count
+
+
+
+def handleBlockData(data):
+    
+    if data == None:
+        data = (block_id<<4)|(meta&0x0F)
+    
+    msg = map_block_msg()
+    msg.x = x + chunk_x
+    msg.y = y
+    msg.z = z + chunk_z
+    
+    block_id, block_meta = column.get_block(msg.x, msg.y, msg.z)
+    
+    msg.blockid = block_id
+    msg.meta = block_meta
+    
+    # in other words, if not air...
+    if block_id != 0:
+        blockpub.publish(msg)
+        #print msg
+        #count+=1
+
+        """
+
+        def set_block(self, x, y, z, block_id = None, meta = None, data = None):
 		x, rx = divmod(x, 16)
 		y, ry = divmod(y, 16)
 		z, rz = divmod(z, 16)
@@ -265,19 +314,6 @@ def handleChunkData(data):
 			data = (block_id<<4)|(meta&0x0F)
 		chunk.block_data.set(rx, ry, rz, data)
 
-	def get_light(self, x, y, z):
-		x, rx = divmod(x, 16)
-		y, ry = divmod(y, 16)
-		z, rz = divmod(z, 16)
-
-		if (x, z) not in self.columns or y > 0x0F:
-			return 0, 0
-		column = self.columns[(x,z)]
-		chunk = column.chunks[y]
-		if chunk == None:
-			return 0, 0
-
-		return chunk.light_block.get(rx,ry,rz), chunk.light_sky.get(rx,ry,rz)
 
 	def set_light(self, x, y, z, light_block = None, light_sky = None):
 		x, rx = divmod(x, 16)
@@ -300,17 +336,8 @@ def handleChunkData(data):
 			chunk.light_block.set(rx, ry, rz, light_block&0xF)
 		if light_sky != None:
 			chunk.light_sky.set(rx, ry, rz, light_sky&0xF)
-
-	def get_biome(self, x, z):
-		x, rx = divmod(x, 16)
-		z, rz = divmod(z, 16)
-
-		if (x,z) not in self.columns:
-			return 0
-
-		return self.columns[(x,z)].biome.get(rx, rz)
-
-	def set_biome(self, x, z, data):
+	
+        def set_biome(self, x, z, data):
 		x, rx = divmod(x, 16)
 		z, rz = divmod(z, 16)
 
@@ -321,15 +348,14 @@ def handleChunkData(data):
 			self.columns[(x,z)] = column
 
 		return column.biome.set(rx, rz, data)
-"""
+        """
 
 if __name__ == "__main__":
     rospy.init_node('map_data_node')
 
-    #rospy.Subscriber('chunk_data', chunk_data_msg, handleChunkData)
+    rospy.Subscriber('chunk_data', chunk_data_msg, handleChunkData)
     rospy.Subscriber('chunk_bulk', chunk_bulk_msg, handleChunkBulk)
-    #rospy.Subscriber('chunk_meta', chunk_meta_msg, handleChunkMeta)
-    #rospy.Subscriber('block_data', block_data_msg, handleBlockData)
+    rospy.Subscriber('block_data', block_data_msg, handleBlockData)
 
     blockpub = rospy.Publisher('block', map_block_msg, queue_size = 100000)
     
