@@ -191,6 +191,32 @@ class ChunkColumn:
         
         return data>>4, data&0x0F
 
+
+
+def sendChunkData(data, column):
+
+    #count = 0
+    for x in range(16):
+        for z in range(16):
+            for y in range(256):
+                msg = map_block_msg()
+                msg.x = x + chunk_x
+                msg.y = y
+                msg.z = z + chunk_z
+
+                block_id, block_meta = column.get_block(msg.x, msg.y, msg.z)
+
+                msg.blockid = block_id
+                msg.meta = block_meta
+                # in other words, if not air...
+                if block_id != 0:
+                    blockpub.publish(msg)
+                    #print msg
+                    #count+=1
+    #print "number of blocks sent"
+    #print count
+
+
 def handleChunkBulk(data):
 
     skylight = data.sky_light
@@ -198,34 +224,15 @@ def handleChunkBulk(data):
     
     for meta in data.metadata:
         # Read chunk metadata
-        chunk_x = meta.chunk_x
-        chunk_z = meta.chunk_z
+        
+        #chunk_x = meta.chunk_x
+        #chunk_z = meta.chunk_z
         mask = meta.primary_bitmap
         
         # Unpack the chunk column data
-        column = ChunkColumn()
-        column.unpack(bbuff, mask, skylight)
-        count = 0
-        for x in range(16):
-            for z in range(16):
-                for y in range(256):
-                    msg = map_block_msg()
-                    msg.x = x + chunk_x
-                    msg.y = y
-                    msg.z = z + chunk_z
-
-                    block_id, block_meta = column.get_block(msg.x, msg.y, msg.z)
-
-                    msg.blockid = block_id
-                    msg.meta = block_meta
-                    # in other words, if not air...
-                    if block_id != 0:
-                        blockpub.publish(msg)
-                        #print msg
-                        #count+=1
-        #print "number of blocks sent"
-        #print count
-
+        col = ChunkColumn()
+        col.unpack(bbuff, mask, skylight)
+        sendChunkData(data, col)
 
 
 
@@ -236,37 +243,18 @@ def handleChunkData(data):
     mask = data.primary_bitmap
     continuous = data.continuous
     bbuff = utils.BoundBuffer(data.data)
+    
     if self.dimension == DIMENSION_OVERWOLD:
         skylight = True
     else:
         skylight = False
     key = (x_chunk, z_chunk)
     
-    column = ChunkColumn()
+    col = ChunkColumn()
+    col.unpack(bbuff, mask, skylight, continuous)
+    sendChunkData(data, col)
     
-    column.unpack(bbuff, mask, skylight, continuous)
     
-    for x in range(16):
-        for z in range(16):
-            for y in range(256):
-                msg = map_block_msg()
-                msg.x = x + chunk_x
-                msg.y = y
-                msg.z = z + chunk_z
-                
-                block_id, block_meta = column.get_block(msg.x, msg.y, msg.z)
-
-                msg.blockid = block_id
-                msg.meta = block_meta
-                
-                # in other words, if not air...
-                if block_id != 0:
-                    blockpub.publish(msg)
-                    #print msg
-                    #count+=1
-    
-    #print "number of blocks sent"
-    #print count
 
 
 
