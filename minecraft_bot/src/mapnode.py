@@ -177,7 +177,7 @@ class ChunkColumn:
     
     # modified to include light and sky data, since there
     # doesn't seem to be a function to retrieve it already
-    def get_block(self, x, y, z, bl = False, sl = False):
+    def get_block(self, x, y, z):
         
         x, y, z = int(x), int(y), int(z)
         x, rx = divmod(x, 16)
@@ -188,19 +188,20 @@ class ChunkColumn:
         
         if chunk == None:
             #print (0, 0)
-            return 0, 0, 0, 0
+            return 0, 0, -1, -1
         
         data = chunk.block_data.get(rx,ry,rz)
-
+        
+        # light is -1 if no light data. 0 implies lowest light level (total darkness)
         if bl:
             light = chunk.light_block.get(rx, ry, rz)
         else:
-            light = 0
+            light = -1
 
         if sl:
             sky = chunk.light_sky.get(rx, ry, rz)
         else:
-            sky = 0
+            sky = -1
 
         #print (light, sky)
         return data>>4, data&0x0F, light, sky
