@@ -175,7 +175,9 @@ class ChunkColumn:
                 self.chunks[i].light_sky.unpack(buff)
     
     
-    def get_block(self, x, y, z):
+    # modified to include light and sky data, since there
+    # doesn't seem to be a function to retrieve it already
+    def get_block(self, x, y, z, bl = False, sl = False):
         
         x, y, z = int(x), int(y), int(z)
         x, rx = divmod(x, 16)
@@ -185,36 +187,58 @@ class ChunkColumn:
         chunk = self.chunks[y]
         
         if chunk == None:
-            return 0, 0
+            #print (0, 0)
+            return 0, 0, 0, 0
         
         data = chunk.block_data.get(rx,ry,rz)
-        
-        return data>>4, data&0x0F
+
+        if bl:
+            light = chunk.light_block.get(rx, ry, rz)
+        else:
+            light = 0
+
+        if sl:
+            sky = chunk.light_sky.get(rx, ry, rz)
+        else:
+            sky = 0
+
+        #print (light, sky)
+        return data>>4, data&0x0F, light, sky
 
 
 
-def sendChunkData(data, column):
-
-    #count = 0
+def unwrapChunk(data, column):
+    
     for x in range(16):
         for z in range(16):
             for y in range(256):
-                msg = map_block_msg()
-                msg.x = x + chunk_x
-                msg.y = y
-                msg.z = z + chunk_z
 
-                block_id, block_meta = column.get_block(msg.x, msg.y, msg.z)
+                sendBlockData(data, column, x, y, z)
+                
 
-                msg.blockid = block_id
-                msg.meta = block_meta
-                # in other words, if not air...
-                if block_id != 0:
-                    blockpub.publish(msg)
-                    #print msg
-                    #count+=1
-    #print "number of blocks sent"
-    #print count
+         
+def sendBlockData(data, column, x, y, z):
+    
+    chunk_x = data.chunk_x
+    chunk_z = data.chunk_z
+    
+    msg = map_block_msg()
+    msg.x = x + chunk_x
+    msg.y = y
+    msg.z = z + chunk_z
+
+    block_id, block_meta, light, sky = column.get_block(msg.x, msg.y, msg.z)
+
+    msg.blockid = block_id
+    msg.meta = block_meta
+    msg.blocklight = light
+    msg.skylight = sky
+    
+    # in other words, if not air...
+    if block_id != 0:
+        blockpub.publish(msg)
+        print msg
+
 
 
 def handleChunkBulk(data):
@@ -225,22 +249,19 @@ def handleChunkBulk(data):
     for meta in data.metadata:
         # Read chunk metadata
         
-        #chunk_x = meta.chunk_x
-        #chunk_z = meta.chunk_z
         mask = meta.primary_bitmap
         
         # Unpack the chunk column data
         col = ChunkColumn()
         col.unpack(bbuff, mask, skylight)
-        sendChunkData(data, col)
+        
+        # unroll and send the block data
+        unwrapChunk(meta, col)
 
 
 
 def handleChunkData(data):
     
-    chunk_x = data.chunk_x
-    chunk_z = data.chunk_z
-    mask = data.primary_bitmap
     continuous = data.continuous
     bbuff = utils.BoundBuffer(data.data)
     
@@ -252,11 +273,10 @@ def handleChunkData(data):
     
     col = ChunkColumn()
     col.unpack(bbuff, mask, skylight, continuous)
-    sendChunkData(data, col)
+    
+    unwrapChunk(data, col)
     
     
-
-
 
 def handleBlockData(data):
     
@@ -268,16 +288,18 @@ def handleBlockData(data):
     msg.y = y
     msg.z = z + chunk_z
     
-    block_id, block_meta = column.get_block(msg.x, msg.y, msg.z)
-    
-    msg.blockid = block_id
-    msg.meta = block_meta
+    # need to change this. find a way to get light, sky, and meta
+    # data from the original block change message (if possible)
+    # otherwise, will have to look at light information from previous
+    # block at specified location
+    msg.blocklight = 0
+    msg.skylight = 0
+
+    msg.blockid = data.blockid 
     
     # in other words, if not air...
-    if block_id != 0:
+    if msg.blockid != 0:
         blockpub.publish(msg)
-        #print msg
-        #count+=1
 
         """
 
