@@ -177,7 +177,7 @@ class ChunkColumn:
     
     # modified to include light and sky data, since there
     # doesn't seem to be a function to retrieve it already
-    def get_block(self, x, y, z):
+    def get_block(self, x, y, z, bl=False, sl=False):
         
         x, y, z = int(x), int(y), int(z)
         x, rx = divmod(x, 16)
@@ -209,7 +209,7 @@ class ChunkColumn:
 
 
 def unwrapChunk(data, column):
-    
+    #print (data.chunk_x, data.chunk_z)
     for x in range(16):
         for z in range(16):
             for y in range(256):
@@ -220,14 +220,22 @@ def unwrapChunk(data, column):
          
 def sendBlockData(data, column, x, y, z):
     
-    chunk_x = data.chunk_x
-    chunk_z = data.chunk_z
+    base_x = data.chunk_x*16
+    base_z = data.chunk_z*16
     
+    #print "base x %d" %(base_x)
+    #print "base z %d" %(base_z)
     msg = map_block_msg()
-    msg.x = x + chunk_x
+    msg.x = x + base_x
     msg.y = y
-    msg.z = z + chunk_z
-
+    msg.z = z + base_z
+    
+    
+    #if (msg.x > -80 and msg.x < -1
+    #        and msg.y > 0 and msg.y < 12
+    #        and msg.z > -96 and msg.z < -19):
+    #    print (msg.x, msg.y, msg.z)
+    
     block_id, block_meta, light, sky = column.get_block(msg.x, msg.y, msg.z)
 
     msg.blockid = block_id
@@ -238,7 +246,7 @@ def sendBlockData(data, column, x, y, z):
     # in other words, if not air...
     if block_id != 0:
         blockpub.publish(msg)
-        print msg
+        #print msg
 
 
 
